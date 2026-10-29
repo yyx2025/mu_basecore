@@ -304,7 +304,17 @@ DumpCpuContext (
 
   mRecursiveException = TRUE;
 
-  CharCount = AsciiSPrint (Buffer, sizeof (Buffer), "\n\n%a Exception at 0x%016lx\n", mExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR);
+  // Fold FAR and ESR into the header so the faulting address (what was being
+  // accessed) and the exception syndrome are visible on the screen as well as
+  // serial. On vermeer the UEFI default exception handler catches the
+  // pre-kernel crashes; this makes the next one self-diagnosing without a
+  // serial cable.
+  CharCount = AsciiSPrint (Buffer, sizeof (Buffer),
+    "\n\n%a Exception at 0x%016lx\n  FAR 0x%016lx  ESR 0x%016lx\n",
+    mExceptionTypeString[ExceptionType],
+    SystemContext.SystemContextAArch64->ELR,
+    SystemContext.SystemContextAArch64->FAR,
+    SystemContext.SystemContextAArch64->ESR);
   SerialPortWrite ((UINT8 *)Buffer, CharCount);
 
   // Prepare a unicode buffer for ConOut, if applicable, in case the buffer
